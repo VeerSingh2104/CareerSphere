@@ -1,42 +1,78 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "student",
-  });
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
+    setError(""); // Clear errors
+    setSuccess(""); // Clear success message
+
     try {
-      const response = await axios.post("http://localhost:5000/api/users/signup", formData);
-      alert(response.data.message);
+      const response = await fetch("http://localhost:5000/api/users/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess("Signup successful! Redirecting to login...");
+        setTimeout(() => navigate("/login"), 2000); // Redirect to login page
+      } else {
+        setError(data.message || "Signup failed. Please try again.");
+      }
     } catch (error) {
-      alert(error.response?.data?.message || "Signup failed");
+      console.error("Signup Error:", error);
+      setError("Something went wrong. Please try again.");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input type="text" name="name" placeholder="Name" onChange={handleChange} required />
-      <input type="email" name="email" placeholder="Email" onChange={handleChange} required />
-      <input type="password" name="password" placeholder="Password" onChange={handleChange} required />
-      
-    
-      <select name="role" onChange={handleChange}>
-        <option value="student">Student</option>
-        <option value="hiring_manager">Hiring Manager</option>
-      </select>
+    <div className="signup-container">
+      <h1>Sign Up</h1>
+      {error && <p className="error-message">{error}</p>}
+      {success && <p className="success-message">{success}</p>}
 
-      <button type="submit">Sign Up</button>
-    </form>
+      <form onSubmit={handleSignup}>
+        <label>Name:</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+
+        <label>Email:</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+
+        <label>Password:</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        <button type="submit">Sign Up</button>
+      </form>
+
+      <p>
+        Already have an account? <a href="/login">Login</a>
+      </p>
+    </div>
   );
 };
 
